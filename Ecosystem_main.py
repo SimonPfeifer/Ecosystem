@@ -1,13 +1,15 @@
 import pygame as pg
 import pygame.draw as draw
 
-from pygame.locals import *
+#from pygame.locals import *
 
 import animal
  
 class Ecosystem:
 
     def __init__(self):
+
+        self.clock = pg.time.Clock()
 
         self._running = True # Parameter which keeps track of the programmes running state.
         self._display_surf = None
@@ -39,7 +41,10 @@ class Ecosystem:
 
             animal.move()
 
+
+
         pass
+
     def on_render(self):
 
         for animal in self.object_list:
@@ -49,6 +54,7 @@ class Ecosystem:
         pg.display.update()
 
         pass
+
     def on_cleanup(self):
 
         pg.quit()
@@ -65,6 +71,8 @@ class Ecosystem:
 
             self.on_loop()
             self.on_render()
+
+            self.clock.tick(5)
 
         self.on_cleanup()
  

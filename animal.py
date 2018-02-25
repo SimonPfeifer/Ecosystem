@@ -13,8 +13,6 @@ class Animal:
         # Give them a random velocity
         self.velocity = [random.randrange(-2,2) for _ in range(2)]
 
-        print(self.velocity)
-
         # etc..
         self.inner_colour = [random.randint(0,255) for _ in range(3)]
         self.outer_colour = [random.randint(0,255) for _ in range(3)]
