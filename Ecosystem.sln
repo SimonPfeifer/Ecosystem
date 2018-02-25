@@ -1,0 +1,23 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27130.2026
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "Ecosystem", "Ecosystem\Ecosystem.pyproj", "{FFA14667-B34D-4D90-A7F5-83B7D9AA8E86}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FFA14667-B34D-4D90-A7F5-83B7D9AA8E86}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FFA14667-B34D-4D90-A7F5-83B7D9AA8E86}.Release|Any CPU.ActiveCfg = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {84A78EFD-7E25-4604-B02B-A06C999E1A15}
+	EndGlobalSection
+EndGlobal
