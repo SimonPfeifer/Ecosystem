@@ -16,7 +16,7 @@ It is organised as follows:
 - Headings within each category are denoted by a 
   single '-'
 - Every item which expands on a previouse point has
-  one additional '-' relative to it, e.g.:
+  one additional '-' relative to it
 
 
 ################## CORE SYSTEM #####################

@@ -8,11 +8,14 @@ class Animal:
 
     def __init__(self, surface):
 
-        # Assign random starting position
-        self.position = np.array([random.randint(0,dim) for dim in surface.get_size()])
+        # Assign physical properties
+        self.orientation = 0
+        self.position = np.random.rand(2) * surface.get_size()
 
-        # Assign random velocity
-        self.velocity = np.array([random.randrange(-2,2) for _ in range(2)])
+        self.velocity = np.random.rand(2) * 10 - 5
+        self.maxvelovity = 10
+        self.acceleration = np.array([0, 0, 0])
+        self.maxacceleration = 5
 
         # Assign variables used in draw()
         self.bodydrawsize = 6.0
@@ -27,9 +30,9 @@ class Animal:
         self.poly2 = [self.position[0] - 1.0 * self.bodydrawsize, self.position[1] - 3.0 * self.bodydrawsize]
         self.poly3 = [self.position[0] + 1.0 * self.bodydrawsize, self.position[1] - 3.0 * self.bodydrawsize]
 
-        self.velocityangle = np.arctan2(0, 1) - np.arctan2(self.velocity[0], self.velocity[1])
-        self.poly2 = self.rotate(self.poly1, self.poly2, self.velocityangle)
-        self.poly3 = self.rotate(self.poly1, self.poly3, self.velocityangle)
+        self.orientation = np.arctan2(0, 1) - np.arctan2(self.velocity[0], self.velocity[1])
+        self.poly2 = self.rotate(self.poly1, self.poly2, self.orientation)
+        self.poly3 = self.rotate(self.poly1, self.poly3, self.orientation)
   
         draw.polygon(surface, self.innercolour, [self.poly1, self.poly2, self.poly3], 0)
         draw.polygon(surface, self.outercolour, [self.poly1, self.poly2, self.poly3], 1)
@@ -37,9 +40,15 @@ class Animal:
         # Draw a line in the direction of the velocity vector
         draw.line(surface, self.outercolour, self.position, self.position + self.velocity * self.bodydrawsize, 1)
 
-    def move(self):
+    def move(self, acceleration=np.random.rand(2)*5):
 
-        self.position = [self.position[comp] + self.velocity[comp] for comp in range(2)]
+        if acceleration == None:
+            self.acceleration = np.zeros(3)
+        else:
+            self.acceleration = rotate(self.position, acceleration, self.orientation)
+        self.velocity += np.clip(self.acceleration, -self.maxacceleration, self.maxacceleration)
+        self.position += np.clip(self.velocity, -self.maxvelovity, self.maxvelovity)
+        self.acceleration *= 0
 
     def rotate(self, origin, point, angle):
         ox, oy = origin
