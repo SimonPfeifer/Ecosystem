@@ -1,0 +1,104 @@
+####################################################
+#						   #
+#	List of future features/improvements	   #
+#						   #
+####################################################
+
+Below is a 'work-in-progess' list of features, 
+possible improvements, creative and/or practical
+ideas, notes and anything else that felt important
+enough at the time to write down.
+
+It is organised as follows:
+- Major categories are in capital letters surrounded 
+  by '#'
+- Subcategories therein are preceded by a '##'
+- Headings within each category are denoted by a 
+  single '-'
+- Every item which expands on a previouse point has
+  one additional '-' relative to it, e.g.:
+
+
+################## CORE SYSTEM #####################
+## Neural Network (NN)
+- Training
+-- Purely numerical (no graphical output)
+-- Output snapshots after N epochs containing 
+   weights matrices, NN architecture, etc. (all 
+   output needed to construct and run an instance)
+
+- Running
+-- Write routine able to import a snapshot file
+
+
+## Graphical Interface
+- Interactive
+-- Switches enable/disable info overlay
+
+- Record instead of real-time playback 
+
+
+################## AGENT ###########################
+## Neural Network (NN)
+- Reinforcement learning neural network (RLNN)
+-- Q-function
+
+- Input
+-- Vision
+--- Input pixel values of vision field
+
+- Output
+-- Vector of possible states (e.g. left)
+
+
+## Abilities
+- Health
+-- Health==Hunger
+-- Health decreases over time
+--- Eating increases health
+---- Eating is automatic within distance of food
+---- Eating is a state (i.e. requires NN output)
+
+- Movement
+-- Orientation? Agent-space or window-space (Up, 
+   down, left, right vs forward, back, left, right)
+-- Variable quantities 
+--- Speed
+--- Acceleration
+--- Turning circle
+
+- Vision
+-- Vision field
+--- Simple geometric shape specifies vision field
+-- Size and shape of vision field can vary
+
+- Smell
+-- Smell objects within radius
+-- Signal decreases with increased range from object
+
+
+################## ENVIRONMENT #####################
+## Food
+- Spawn distribution
+-- Random 
+-- Uniform
+-- Nonuniform
+--- High/low intensity areas
+--- Perlin noise
+
+- Spawn rate
+-- High rate encourages camping
+-- Low rate encourages migration
+
+- Despawn?
+
+- Physical properties
+-- Shape
+-- Colour
+-- Smell
+
+
+## Biomes 
+- Generate environments with a set of properties
+- Distribute across map 
+
