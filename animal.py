@@ -21,7 +21,7 @@ class Animal:
         self.surface = surface
         self.bodydrawsize = 6.0
         self.velocitylinelength = 1.5
-        self.innercolour = np.array([random.randint(0,255) for _ in range(3)])
+        self.innercolour = np.random.rand(3) * 255
         self.outercolour = np.array([255, 255, 255])
 
         # Assigne variables for vision
@@ -38,7 +38,7 @@ class Animal:
         self.orientation = np.arctan2(0, 1) - np.arctan2(self.velocity[0], self.velocity[1])
         self.poly2 = self.rotate(self.poly1, self.poly2, self.orientation)
         self.poly3 = self.rotate(self.poly1, self.poly3, self.orientation)
-  
+    
         draw.polygon(surface, self.innercolour, [self.poly1, self.poly2, self.poly3], 0)
         draw.polygon(surface, self.outercolour, [self.poly1, self.poly2, self.poly3], 1)
 
