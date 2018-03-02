@@ -12,7 +12,7 @@ class Animal:
         self.orientation = 0
         self.position = np.random.rand(2) * surface.get_size()
 
-        self.velocity = np.random.rand(2) * 10 - 5
+        self.velocity = np.array([1.0, 0.0])#np.random.rand(2) * 10 - 5
         self.maxvelovity = 10
         self.acceleration = np.array([0, 0, 0])
         self.maxacceleration = 2
@@ -22,6 +22,8 @@ class Animal:
         self.velocitylinelength = 1.5
         self.innercolour = np.array([random.randint(0,255) for _ in range(3)])
         self.outercolour = np.array([255, 255, 255])
+
+        self.counter = 0
 
     def draw(self,surface):
 
@@ -40,10 +42,10 @@ class Animal:
         # Draw a line in the direction of the velocity vector
         draw.line(surface, self.outercolour, self.position, self.position + self.velocity * self.bodydrawsize, 1)
 
-    def move(self, acceleration=np.random.rand(2)*2):
+    def move(self, acceleration=None):
 
-        if acceleration.any() == None:
-            self.acceleration = np.zeros(3)
+        if acceleration == None:
+            self.acceleration = np.zeros(2)
         else:
             self.acceleration = acceleration
         self.velocity += np.clip(self.acceleration, -self.maxacceleration, self.maxacceleration)
