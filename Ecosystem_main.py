@@ -80,7 +80,7 @@ class Ecosystem:
             self.on_loop()
             self.on_render()
 
-            self.clock.tick(5)
+            self.clock.tick(60)
 
         self.on_cleanup()
  
