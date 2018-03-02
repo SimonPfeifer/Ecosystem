@@ -12,10 +12,10 @@ class Animal:
         self.orientation = 0
         self.position = np.random.rand(2) * surface.get_size()
 
-        self.velocity = np.array([1.0, 0.0])#np.random.rand(2) * 10 - 5
-        self.maxvelovity = 10
+        self.velocity = np.array([0.5, 0.0])#np.random.rand(2) * 10 - 5
+        self.maxvelovity = 1.0
         self.acceleration = np.array([0, 0, 0])
-        self.maxacceleration = 2
+        self.maxacceleration = 0.1
 
         # Assign variables used in draw()
         self.bodydrawsize = 6.0
@@ -23,7 +23,9 @@ class Animal:
         self.innercolour = np.array([random.randint(0,255) for _ in range(3)])
         self.outercolour = np.array([255, 255, 255])
 
-        self.counter = 0
+        # Assigne variables for vision
+        self.nwhiskers = 8
+        self.visionrange = 30
 
     def draw(self,surface):
 
@@ -40,12 +42,18 @@ class Animal:
         draw.polygon(surface, self.outercolour, [self.poly1, self.poly2, self.poly3], 1)
 
         # Draw a line in the direction of the velocity vector
-        draw.line(surface, self.outercolour, self.position, self.position + self.velocity * self.bodydrawsize, 1)
+        #draw.line(surface, self.outercolour, self.position, self.position + self.velocity * self.bodydrawsize, 1)
+
+        # Draw whiskers
+        self.whiskersangle = np.linspace(0, 2*np.pi, self.nwhiskers, endpoint=False) + self.orientation
+        self.whiskersendpoint = [self.rotate(self.position, self.position + [0, self.visionrange], angle) for angle in self.whiskersangle]
+        for endpoint in self.whiskersendpoint:
+            draw.line(surface, self.outercolour, self.position, endpoint, 1)
 
     def move(self, acceleration=None):
 
         if acceleration == None:
-            self.acceleration = np.zeros(2)
+            self.acceleration = np.zeros(2) + [0,0.01]
         else:
             self.acceleration = acceleration
         self.velocity += np.clip(self.acceleration, -self.maxacceleration, self.maxacceleration)
