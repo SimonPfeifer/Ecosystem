@@ -16,7 +16,7 @@ class Ecosystem:
         self.size = self.width, self.height = 750, 500
 
         self.n_animals = 10
-        self.n_plants = 30
+        self.n_plants = 20
  
     def on_init(self):
 
@@ -52,8 +52,12 @@ class Ecosystem:
         self._display_surf.fill((0,0,0))
         
         for animal in self.animals:
-            
+
            animal.draw(self._display_surf)
+
+        for plant in self.plants:
+
+            plant.draw(self._display_surf)
         
         pg.display.update()
 
