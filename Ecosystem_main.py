@@ -4,16 +4,19 @@ import pygame.draw as draw
 #from pygame.locals import *
 
 import animal, plant
+
+width = 750
+height = 500
  
 class Ecosystem:
 
-    def __init__(self):
+    def __init__(self, width, height):
 
         self.clock = pg.time.Clock()
 
         self._running = True # Parameter which keeps track of the programmes running state.
         self._display_surf = None
-        self.size = self.width, self.height = 750, 500
+        self.size = self.width, self.height = width, height
 
         self.n_animals = 1
         self.n_plants = 20
@@ -87,5 +90,5 @@ class Ecosystem:
 if __name__ == "__main__" :
 
     # Create instance of the programme
-    theApp = Ecosystem()
+    theApp = Ecosystem(width, height)
     theApp.on_execute()
