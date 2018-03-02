@@ -15,7 +15,7 @@ class Ecosystem:
         self._display_surf = None
         self.size = self.width, self.height = 750, 500
 
-        self.n_animals = 10
+        self.n_animals = 1
         self.n_plants = 20
  
     def on_init(self):
