@@ -26,23 +26,20 @@ class Ecosystem:
         pg.init()
         self._display_surf = pg.display.set_mode(self.size, pg.HWSURFACE | pg.DOUBLEBUF)
 
-        self.object_list = []
-
-        # Add some animals to the ecosystem
+        # Add animals to the ecosystem
         self.animals = [animal.Animal(self._display_surf) for _ in range(self.n_animals)]
 
-        # Add some plants to the ecosystem
+        # Add plants to the ecosystem
         self.plants = [plant.Plant(self._display_surf) for _ in range(self.n_plants)]
 
 
     def on_event(self, event):
 
         if event.type == pg.QUIT:
+
             self._running = False
 
     def on_loop(self):
-
-        self._display_surf.fill((0,0,0))
 
         for animal in self.animals:
 
@@ -52,8 +49,10 @@ class Ecosystem:
 
     def on_render(self):
 
-        for animal in self.object_list:
+        self._display_surf.fill((0,0,0))
         
+        for animal in self.animals:
+            
            animal.draw(self._display_surf)
         
         pg.display.update()
