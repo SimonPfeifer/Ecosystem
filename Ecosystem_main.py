@@ -3,7 +3,7 @@ import pygame.draw as draw
 
 #from pygame.locals import *
 
-import animal
+import animal, plant
  
 class Ecosystem:
 
@@ -29,10 +29,10 @@ class Ecosystem:
         self.object_list = []
 
         # Add some animals to the ecosystem
-        [self.object_list.append(animal.Animal(self._display_surf)) for _ in range(self.n_animals)]
+        self.animals = [animal.Animal(self._display_surf) for _ in range(self.n_animals)]
 
         # Add some plants to the ecosystem
-        [self.object_list.append(plant.Plant(self._display_surf)) for _ in range(self.n_plants)]
+        self.plants = [plant.Plant(self._display_surf) for _ in range(self.n_plants)]
 
 
     def on_event(self, event):
@@ -44,7 +44,7 @@ class Ecosystem:
 
         self._display_surf.fill((0,0,0))
 
-        for animal in self.object_list:
+        for animal in self.animals:
 
             animal.move()
 
