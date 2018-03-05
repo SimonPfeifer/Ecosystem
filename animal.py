@@ -26,7 +26,7 @@ class Animal:
 
         # Assign variables for whiskers()
         self.nwhiskers = 3
-        self.visionrange = 10
+        self.visionrange = 20
 
         # Assign variables for eat()
         self.eatdistance = 3
@@ -49,10 +49,14 @@ class Animal:
         #draw.line(surface, self.outercolour, self.position, self.position + self.velocity * self.bodydrawsize, 1)
 
         # Draw whiskers
-        # self.whiskersangle = np.linspace(0, 2*np.pi, self.nwhiskers, endpoint=False) + self.orientation
-        # self.whiskersendpoint = [self.wrap_coordinates(self.surface, self.rotate(self.position, self.position + [0, self.visionrange], angle)) for angle in self.whiskersangle]
-        # for endpoint in self.whiskersendpoint:
-        #     draw.line(surface, self.outercolour, self.position, endpoint, 1)
+        whiskersdraw = True
+        if whiskersdraw == True:
+            self.whiskersangle = np.linspace(0, 2*np.pi, self.nwhiskers, endpoint=False) + self.orientation
+            self.whiskersendpoint = [self.rotate(self.position, self.position + [0, self.visionrange], angle) for angle in self.whiskersangle]
+            for endpoint in self.whiskersendpoint:
+                self.whiskerpixels = self.get_line(self.position, endpoint)
+                self.whiskerpixels = [self.wrap_coordinates(surface, pixelcoordinate) for pixelcoordinate in self.whiskerpixels]
+                [surface.set_at(pixel, self.outercolour) for pixel in self.whiskerpixels]
 
     def move(self, acceleration=None):
 
@@ -72,6 +76,7 @@ class Animal:
         self.whiskersendpoints = [self.rotate(self.position, self.position + [0, self.visionrange], angle) for angle in self.whiskersangle]
         for i, endpoint in enumerate(self.whiskersendpoints):
             self.whiskerpixels = self.get_line(self.position, endpoint)
+            self.whiskerpixels = [self.wrap_coordinates(surface, pixelcoordinate) for pixelcoordinate in self.whiskerpixels]
             self.pixelvalues = [surface.get_at(pixel)[:-1] for pixel in self.whiskerpixels]
             self.whiskeroutput = np.sum(self.pixelvalues)
             if self.whiskeroutput > 0: 
@@ -115,11 +120,14 @@ class Animal:
     def get_line(self, start, end):
         x1, y1 = np.array(start, dtype='int')
         x2, y2 = np.array(end, dtype='int')
-        
-        steep = abs(y2 - y1) > abs(x2 - x1)
-        if steep:
+        dx = x2 - x1
+        dy = y2 - y1
+
+        is_steep = abs(dy) > abs (dx)
+
+        if is_steep:
             x1, y1 = y1, x1
-            x2, y2 =  y2, x2
+            x2, y2 = y2, x2
 
         swapped = False
         if x1 > x2:
@@ -127,27 +135,24 @@ class Animal:
             y1, y2 = y2, y1
             swapped = True
 
-        if y1 < y2:
-            ystep = 1
-        else:
-            ystep = -1
-
         dx = x2 - x1
-        dy = abs(y2 - y1)
-        error = -dx / 2
-        y = y1
+        dy = y2 - y1
 
+        error = int(dx / 2.0)
+        ystep = 1 if y1 < y2 else -1
+
+        y = y1
         line = []
         for x in range(x1, x2 + 1):
-            if steep:
-                line.append((y, x))
-            else:
-                line.append((x, y))
+            coord = (y, x) if is_steep else (x, y)
+            line.append(coord)
+            error -= abs(dy)
+            if error < 0:
+                y += ystep
+                error += dx
 
-            error = error + dy
-            if error > 0:
-                y = y + ystep
-                error = error + dx
+        if swapped:
+            line.reverse()
 
         return line[1:]
 

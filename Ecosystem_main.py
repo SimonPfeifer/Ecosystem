@@ -52,7 +52,8 @@ class Ecosystem:
             # 3. Reaction (e.g. eat) that follows the given output
             
             # Senses
-            #self.nninput = animal.whiskers(self._display_surf)
+            self.nninput = animal.whiskers(self._display_surf)
+            #print(self.nninput)
 
             # Actions
             self.nnoutput = None
