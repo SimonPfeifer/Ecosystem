@@ -1,3 +1,4 @@
+import numpy as np
 import pygame as pg
 import pygame.draw as draw
 
@@ -19,7 +20,7 @@ class Ecosystem:
         self.size = self.width, self.height = width, height
 
         self.n_animals = 1
-        self.n_plants = 20
+        self.n_plants = 50
  
     def on_init(self):
 
@@ -30,10 +31,10 @@ class Ecosystem:
         self._display_surf = pg.display.set_mode(self.size, pg.HWSURFACE | pg.DOUBLEBUF)
 
         # Add animals to the ecosystem
-        self.animals = [animal.Animal(self._display_surf) for _ in range(self.n_animals)]
+        self.animals = np.array([animal.Animal(self._display_surf) for _ in range(self.n_animals)])
 
         # Add plants to the ecosystem
-        self.plants = [plant.Plant(self._display_surf) for _ in range(self.n_plants)]
+        self.plants = np.array([plant.Plant(self._display_surf) for _ in range(self.n_plants)])
 
 
     def on_event(self, event):
@@ -45,8 +46,23 @@ class Ecosystem:
     def on_loop(self):
 
         for animal in self.animals:
+            # Order of updating should be:
+            # 1. Sensory (e.g. vision) which serves as input for NN
+            # 2. Action (e.g. move) which is the ouput of the NN given the available information
+            # 3. Reaction (e.g. eat) that follows the given output
+            
+            # Senses
+            #self.nninput = animal.whiskers(self._display_surf)
 
-            animal.move()
+            # Actions
+            self.nnoutput = None
+            animal.move(self.nnoutput)
+
+            # Reactions
+            self.plantposition = [plant.position for plant in self.plants]
+            self.keepindex = animal.eat(self.plantposition)
+            if self.keepindex.all() == False:
+                self.plants = self.plants[self.keepindex]
 
         pass
 

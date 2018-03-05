@@ -24,9 +24,12 @@ class Animal:
         self.innercolour = np.random.rand(3) * 255
         self.outercolour = np.array([255, 255, 255])
 
-        # Assigne variables for vision
+        # Assign variables for whiskers()
         self.nwhiskers = 3
         self.visionrange = 10
+
+        # Assign variables for eat()
+        self.eatdistance = 3
 
     def draw(self, surface):
 
@@ -47,9 +50,20 @@ class Animal:
 
         # Draw whiskers
         # self.whiskersangle = np.linspace(0, 2*np.pi, self.nwhiskers, endpoint=False) + self.orientation
-        # self.whiskersendpoint = [self.rotate(self.position, self.position + [0, self.visionrange], angle) for angle in self.whiskersangle]
+        # self.whiskersendpoint = [self.wrap_coordinates(self.surface, self.rotate(self.position, self.position + [0, self.visionrange], angle)) for angle in self.whiskersangle]
         # for endpoint in self.whiskersendpoint:
         #     draw.line(surface, self.outercolour, self.position, endpoint, 1)
+
+    def move(self, acceleration=None):
+
+        if acceleration == None:
+            self.acceleration = np.zeros(2)# + [0,0.01]
+        else:
+            self.acceleration = acceleration
+        self.velocity += np.clip(self.acceleration, -self.maxacceleration, self.maxacceleration)
+        self.position += np.clip(self.velocity, -self.maxvelovity, self.maxvelovity)
+        self.position = self.wrap_coordinates(self.surface, self.position)
+        self.acceleration *= 0
 
     def whiskers(self, surface):
 
@@ -66,17 +80,13 @@ class Animal:
 
         return self.whiskersignal
 
+    def eat(self, foodposition):
 
-    def move(self, acceleration=None):
+        self.deltaposition = np.array(foodposition - self.position)
+        self.fooddistance = np.sqrt(np.sum(self.deltaposition * self.deltaposition, axis=1))
+        self.noteatindex = self.fooddistance > self.eatdistance
 
-        if acceleration == None:
-            self.acceleration = np.zeros(2) + [0,0.01]
-        else:
-            self.acceleration = acceleration
-        self.velocity += np.clip(self.acceleration, -self.maxacceleration, self.maxacceleration)
-        self.position += np.clip(self.velocity, -self.maxvelovity, self.maxvelovity)
-        self.position = self.wrap_coordinates(self.surface, self.position)
-        self.acceleration *= 0
+        return self.noteatindex
 
     def wrap_coordinates(self, surface, coordinates):
         width, height = surface.get_size()
