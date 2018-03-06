@@ -45,6 +45,16 @@ class Ecosystem:
 
     def on_loop(self):
 
+        # ENVIRONMENT
+        self.smellon = True
+        if self.smellon:
+            self.plantposition = [plant.position for plant in self.plants]
+            self.smellmap = np.zeros([width, height, 3])
+            xx, yy = np.meshgrid(np.linspace(0, height, height), np.linspace(0, width, width))
+            for position in self.plantposition:
+                self.smellmap[:, :, 0] += gaussian2D([50, position[::-1], 50], [xx, yy])
+
+        # AGENTS
         for animal in self.animals:
             # Order of updating should be:
             # 1. Sensory (e.g. vision) which serves as input for NN
@@ -70,6 +80,7 @@ class Ecosystem:
     def on_render(self):
 
         self._display_surf.fill((0,0,0))
+        pg.surfarray.blit_array(self._display_surf, self.smellmap)
         
         for animal in self.animals:
 
@@ -103,6 +114,17 @@ class Ecosystem:
             self.clock.tick(60)
 
         self.on_cleanup()
+
+def gaussian2D(params, x):
+    # Calculates value of gaussian with params = [a, [x, y], c]
+    # at location x = [x, y]
+
+    a, b, c = params
+    X, Y = b
+    x, y = x
+    g = a * np.exp(-0.5 * ((x - X)**2 + (y - Y)**2) / c**2)
+
+    return g
  
 if __name__ == "__main__" :
 
