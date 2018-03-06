@@ -34,7 +34,7 @@ class Ecosystem:
         self._display_surf = pg.display.set_mode(self.size, pg.HWSURFACE | pg.DOUBLEBUF)
 
         # Add animals to the ecosystem
-        self.animals = np.array([agent.Animal(self._display_surf) for _ in range(self.nanimals)])
+        self.animals = np.array([agent.Agent(self._display_surf) for _ in range(self.nanimals)])
 
         # Add plants to the ecosystem
         self.plants = np.array([food.Plant(self._display_surf) for _ in range(self.nplants)])

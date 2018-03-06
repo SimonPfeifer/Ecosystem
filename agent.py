@@ -4,7 +4,7 @@ import pygame.draw as draw
 
 import random
 
-class Animal:
+class Agent:
 
     def __init__(self, surface):
 
