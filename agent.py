@@ -9,6 +9,8 @@ class Agent:
     def __init__(self, surface):
 
         # Assign physical properties
+        self.health = 1
+
         self.orientation = 0
         self.position = np.random.rand(2) * surface.get_size()
 

@@ -85,6 +85,7 @@ class Ecosystem:
             self.keepindex = animal.eat(self.plantposition)
             if self.keepindex.all() == False:
                 self.plants = self.plants[self.keepindex]
+                animal.health += np.sum(self.keepindex == False)
 
         pass
 
