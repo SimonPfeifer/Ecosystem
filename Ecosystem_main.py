@@ -54,17 +54,6 @@ class Ecosystem:
         if self.nnewplants > 0:
             self.newplants = np.array([food.Plant(self._display_surf) for _ in range(self.nnewplants)])
             self.plants = np.hstack([self.plants, self.newplants])
-
-        # Generate a map of smell intensity
-        if self.smellon:
-            self.plantposition = [plant.position for plant in self.plants]
-            self.smellmap = np.zeros([width, height, 3])
-            xx, yy = np.meshgrid(np.linspace(0, height, height), np.linspace(0, width, width))
-            for position in self.plantposition:
-                self.smellmap[:, :, 0] += gaussian2D([50, position[::-1], 50], [xx, yy])
-
-
-
         # AGENTS
         for animal in self.animals:
             # Order of updating should be:
@@ -92,7 +81,6 @@ class Ecosystem:
     def on_render(self):
 
         self._display_surf.fill((0,0,0))
-        if self.smellon: pg.surfarray.blit_array(self._display_surf, self.smellmap)
         
         for animal in self.animals:
 
