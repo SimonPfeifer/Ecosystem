@@ -27,8 +27,8 @@ class Ecosystem:
         self._running = True
 
         # Switches for optional features
-        self.smellon = False
-
+        self.smellon = True
+ 
         # Initialise the pygame display and define its surface parameters
         pg.init()
         self._display_surf = pg.display.set_mode(self.size, pg.HWSURFACE | pg.DOUBLEBUF)
@@ -38,6 +38,19 @@ class Ecosystem:
 
         # Add plants to the ecosystem
         self.plants = np.array([food.Plant(self._display_surf) for _ in range(self.nplants)])
+
+        # Initialise map of smell intensity
+        if self.smellon:
+            self.smellintensity = 50
+            self.smellrange = 50
+            self.smellcolour = 0 # 0=red, 1=green, 2=blue
+
+            self.plantposition = [plant.position for plant in self.plants]
+            self.smellmap = np.zeros([width, height, 3])
+            self.xx, self.yy = np.meshgrid(np.linspace(0, height, height), np.linspace(0, width, width))
+            for position in self.plantposition:
+                self.smellmap[:, :, 0] += gaussian2D([self.smellintensity, position[::-1], self.smellrange], [self.xx, self.yy])
+            self.smellmap = np.clip(self.smellmap, 0, 255)
 
 
     def on_event(self, event):
@@ -56,15 +69,17 @@ class Ecosystem:
             self.plants = np.hstack([self.plants, self.newplants])
 
         # Generate a map of smell intensity
-        if self.smellon:
-            self.plantposition = [plant.position for plant in self.plants]
-            self.smellmap = np.zeros([width, height, 3])
-            xx, yy = np.meshgrid(np.linspace(0, height, height), np.linspace(0, width, width))
-            for position in self.plantposition:
-                self.smellmap[:, :, 0] += gaussian2D([50, position[::-1], 50], [xx, yy])
+        if self.smellon & self.nnewplants > 0:
+            self.newplantposition = [plant.position for plant in self.newplants]
+            self.eatenplantposition = [plant.position for plant in self.eatenplants]
+            for i, position in enumerate(self.newplantposition):
+                self.smellmap[:, :, 0] += gaussian2D([self.smellintensity, position[::-1], self.smellrange], [self.xx, self.yy])
+                self.smellmap[:, :, 0] -= gaussian2D([self.smellintensity, self.eatenplantposition[i][::-1], self.smellrange], [self.xx, self.yy])
+            self.smellmap = np.clip(self.smellmap, 0, 255)
 
 
         # AGENTS
+        self.eatenplants = []
         for animal in self.animals:
             # Order of updating should be:
             # 1. Sensory (e.g. vision) which serves as input for NN
@@ -83,6 +98,7 @@ class Ecosystem:
             self.plantposition = [plant.position for plant in self.plants]
             self.keepindex = animal.eat(self.plantposition)
             if self.keepindex.all() == False:
+                self.eatenplants.append(self.plants[self.keepindex == False])
                 self.plants = self.plants[self.keepindex]
                 animal.health += np.sum(self.keepindex == False)
 
