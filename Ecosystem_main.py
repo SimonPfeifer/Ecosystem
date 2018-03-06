@@ -4,7 +4,7 @@ import pygame.draw as draw
 
 #from pygame.locals import *
 
-import animal, plant
+import agent, food
 
 width = 750
 height = 500
@@ -19,22 +19,25 @@ class Ecosystem:
         self._display_surf = None
         self.size = self.width, self.height = width, height
 
-        self.n_animals = 1
-        self.n_plants = 50
+        self.nanimals = 1
+        self.nplants = 50
  
     def on_init(self):
 
         self._running = True
+
+        # Switches for optional features
+        self.smellon = False
 
         # Initialise the pygame display and define its surface parameters
         pg.init()
         self._display_surf = pg.display.set_mode(self.size, pg.HWSURFACE | pg.DOUBLEBUF)
 
         # Add animals to the ecosystem
-        self.animals = np.array([animal.Animal(self._display_surf) for _ in range(self.n_animals)])
+        self.animals = np.array([agent.Animal(self._display_surf) for _ in range(self.nanimals)])
 
         # Add plants to the ecosystem
-        self.plants = np.array([plant.Plant(self._display_surf) for _ in range(self.n_plants)])
+        self.plants = np.array([food.Plant(self._display_surf) for _ in range(self.nplants)])
 
 
     def on_event(self, event):
@@ -46,13 +49,21 @@ class Ecosystem:
     def on_loop(self):
 
         # ENVIRONMENT
-        self.smellon = True
+        # Spawn new food if total number is below nplants
+        self.nnewplants = self.nplants - len(self.plants)
+        if self.nnewplants > 0:
+            self.newplants = np.array([food.Plant(self._display_surf) for _ in range(self.nnewplants)])
+            self.plants = np.hstack([self.plants, self.newplants])
+
+        # Generate a map of smell intensity
         if self.smellon:
             self.plantposition = [plant.position for plant in self.plants]
             self.smellmap = np.zeros([width, height, 3])
             xx, yy = np.meshgrid(np.linspace(0, height, height), np.linspace(0, width, width))
             for position in self.plantposition:
                 self.smellmap[:, :, 0] += gaussian2D([50, position[::-1], 50], [xx, yy])
+
+
 
         # AGENTS
         for animal in self.animals:
@@ -80,7 +91,7 @@ class Ecosystem:
     def on_render(self):
 
         self._display_surf.fill((0,0,0))
-        pg.surfarray.blit_array(self._display_surf, self.smellmap)
+        if self.smellon: pg.surfarray.blit_array(self._display_surf, self.smellmap)
         
         for animal in self.animals:
 
