@@ -35,7 +35,10 @@ It is organised as follows:
 - Interactive
 -- Switches enable/disable info overlay
 
-- Record instead of real-time playback 
+- Record instead of real-time playback
+
+- Redraw only changes
+-- Needs record of changes from previous loop
 
 
 ################## AGENT ###########################
