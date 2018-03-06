@@ -31,7 +31,7 @@ class Agent:
         self.visionrange = 20
 
         # Assign variables for eat()
-        self.eatdistance = 3
+        self.eatdistance = 20
 
     def draw(self, surface):
 
@@ -63,7 +63,7 @@ class Agent:
     def move(self, acceleration=None):
 
         if acceleration == None:
-            self.acceleration = np.zeros(2)# + [0,0.01]
+            self.acceleration = np.zeros(2) + [0,0.01]
         else:
             self.acceleration = acceleration
         self.velocity += np.clip(self.acceleration, -self.maxacceleration, self.maxacceleration)

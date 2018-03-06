@@ -71,7 +71,7 @@ class Ecosystem:
         # Generate a map of smell intensity
         if self.smellon & self.nnewplants > 0:
             self.newplantposition = [plant.position for plant in self.newplants]
-            self.eatenplantposition = [plant.position for plant in self.eatenplants]
+            self.eatenplantposition = [plant[0].position for plant in self.eatenplants]
             for i, position in enumerate(self.newplantposition):
                 self.smellmap[:, :, 0] += gaussian2D([self.smellintensity, position[::-1], self.smellrange], [self.xx, self.yy])
                 self.smellmap[:, :, 0] -= gaussian2D([self.smellintensity, self.eatenplantposition[i][::-1], self.smellrange], [self.xx, self.yy])
