@@ -13,11 +13,12 @@ class Ecosystem:
 
     def __init__(self, width, height):
 
-        self.clock = pg.time.Clock()
-
         self._running = True # Parameter which keeps track of the programmes running state.
         self._display_surf = None
         self.size = self.width, self.height = width, height
+
+        self.fps = 60        
+        self.clock = pg.time.Clock()
 
         self.nanimals = 1
         self.nplants = 50
@@ -67,7 +68,7 @@ class Ecosystem:
 
             # Actions
             self.nnoutput = None
-            animal.move(self.nnoutput)
+            animal.move(timestep=self.dt, acceleration=self.nnoutput)
 
             # Reactions
             self.plantposition = [plant.position for plant in self.plants]
@@ -108,10 +109,9 @@ class Ecosystem:
             for event in pg.event.get():
                 self.on_event(event)
 
+            self.dt = self.clock.tick(self.fps)
             self.on_loop()
             self.on_render()
-
-            self.clock.tick(60)
 
         self.on_cleanup()
 
