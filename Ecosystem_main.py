@@ -2,9 +2,7 @@ import numpy as np
 import pygame as pg
 import pygame.draw as draw
 
-#from pygame.locals import *
-
-import agent, food
+import environment, agent, food
 
 width = 750
 height = 500
@@ -38,8 +36,7 @@ class Ecosystem:
         self.animals = np.array([agent.Agent(self._display_surf) for _ in range(self.nanimals)])
 
         # Add plants to the ecosystem
-        self.plants = np.array([food.Plant(self._display_surf) for _ in range(self.nplants)])
-
+        self.environment = environment.Environment(self._display_surf, n_plants=self.nplants)
 
     def on_event(self, event):
 
@@ -49,12 +46,6 @@ class Ecosystem:
 
     def on_loop(self):
 
-        # ENVIRONMENT
-        # Spawn new food if total number is below nplants
-        self.nnewplants = self.nplants - len(self.plants)
-        if self.nnewplants > 0:
-            self.newplants = np.array([food.Plant(self._display_surf) for _ in range(self.nnewplants)])
-            self.plants = np.hstack([self.plants, self.newplants])
         # AGENTS
         for animal in self.animals:
             # Order of updating should be:
@@ -71,10 +62,10 @@ class Ecosystem:
             animal.move(timestep=self.dt, acceleration=self.nnoutput)
 
             # Reactions
-            self.plantposition = [plant.position for plant in self.plants]
-            self.keepindex = animal.eat(self.plantposition)
-            if self.keepindex.all() == False:
-                self.plants = self.plants[self.keepindex]
+            self.keepindex = animal.eat(self.environment.plant_positions)
+            self.if_plants_remove = self.environment.plants_remove(self.keepindex)
+            if self.if_plants_remove:
+                self.environment.plants_replenish()
                 animal.health += np.sum(self.keepindex == False)
 
         pass
@@ -87,9 +78,7 @@ class Ecosystem:
 
            animal.draw(self._display_surf)
 
-        for plant in self.plants:
-
-            plant.draw(self._display_surf)
+        self.environment.draw(self._display_surf)
         
         pg.display.update()
 
@@ -115,16 +104,6 @@ class Ecosystem:
 
         self.on_cleanup()
 
-def gaussian2D(params, x):
-    # Calculates value of gaussian with params = [a, [x, y], c]
-    # at location x = [x, y]
-
-    a, b, c = params
-    X, Y = b
-    x, y = x
-    g = a * np.exp(-0.5 * ((x - X)**2 + (y - Y)**2) / c**2)
-
-    return g
  
 if __name__ == "__main__" :
 

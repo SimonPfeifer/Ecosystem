@@ -13,14 +13,31 @@ class Environment:
 		self.surface = surface
 		self.n_plants = n_plants
 
-		self.plants = np.array([food.Plant(self.surface) for _ in range(self.nplants)])
+		self.plants = np.array([food.Plant(self.surface) for _ in range(self.n_plants)])
+		self.plant_positions = np.array([plant.position for plant in self.plants])
 
 
 	def draw(self, surface):
 
 		for plant in self.plants:
-			plant.draw()
+			plant.draw(surface)
 
 	def plants_remove(self, keep_index):
 
 		self.plants = self.plants[keep_index]
+		self.plant_positions = self.plant_positions[keep_index]
+
+		if keep_index.all():
+			return False
+			
+		else:
+			return True
+
+	def plants_replenish(self):
+
+		self.n_new_plants = self.n_plants - len(self.plants)
+		self.new_plants = np.array([food.Plant(self.surface) for _ in range(self.n_new_plants)])
+		self.new_plant_positions = np.array([plant.position for plant in self.new_plants])
+		self.plants = np.hstack([self.plants, self.new_plants])
+		self.plant_positions = np.vstack([self.plant_positions, self.new_plant_positions])
+

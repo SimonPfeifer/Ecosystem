@@ -17,7 +17,7 @@ class Agent:
         self.velocity = np.array([0.0, 0.0], dtype='float')#np.random.rand(2) * 10 - 5
         self.maxvelovity = 0.1
         self.acceleration = np.array([0, 0, 0], dtype='float')
-        self.maxacceleration = 0.005
+        self.maxacceleration = 0.1
 
         # Assign variables used in draw()
         self.surface = surface
