@@ -14,8 +14,8 @@ class Agent:
         self.orientation = 0
         self.position = np.random.rand(2) * surface.get_size()
 
-        self.velocity = np.array([0.5, 0], dtype='float')#np.random.rand(2) * 10 - 5
-        self.maxvelovity = 1.0
+        self.velocity = np.array([0.0, 0.0], dtype='float')#np.random.rand(2) * 10 - 5
+        self.maxvelovity = 0.1
         self.acceleration = np.array([0, 0, 0], dtype='float')
         self.maxacceleration = 0.1
 
@@ -60,14 +60,14 @@ class Agent:
                 self.whiskerpixels = [self.wrap_coordinates(surface, pixelcoordinate) for pixelcoordinate in self.whiskerpixels]
                 [surface.set_at(pixel, self.outercolour) for pixel in self.whiskerpixels]
 
-    def move(self, acceleration=None):
+    def move(self, timestep, acceleration=None):
 
         if acceleration == None:
-            self.acceleration = np.zeros(2) + [0,0.01]
+            self.acceleration = np.zeros(2) + (np.random.rand(2) * 2 -1)
         else:
             self.acceleration = acceleration
-        self.velocity += np.clip(self.acceleration, -self.maxacceleration, self.maxacceleration)
-        self.position += np.clip(self.velocity, -self.maxvelovity, self.maxvelovity)
+        self.velocity += self.normalised(self.acceleration) * self.maxacceleration * timestep
+        self.position += self.normalised(self.velocity) * self.maxvelovity * timestep
         self.position = self.wrap_coordinates(self.surface, self.position)
         self.acceleration *= 0
 
@@ -94,6 +94,13 @@ class Agent:
         self.noteatindex = self.fooddistance > self.eatdistance
 
         return self.noteatindex
+
+    def normalised(self, a, axis=-1, order=2):
+        l2 = np.atleast_1d(np.linalg.norm(a, order, axis))
+        l2[l2==0] = 1
+        normed = a / np.expand_dims(l2, axis)
+
+        return normed[0]
 
     def wrap_coordinates(self, surface, coordinates):
         width, height = surface.get_size()

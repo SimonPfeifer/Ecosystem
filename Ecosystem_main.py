@@ -2,9 +2,7 @@ import numpy as np
 import pygame as pg
 import pygame.draw as draw
 
-#from pygame.locals import *
-
-import agent, food
+import environment, agent, food
 
 width = 750
 height = 500
@@ -13,11 +11,12 @@ class Ecosystem:
 
     def __init__(self, width, height):
 
-        self.clock = pg.time.Clock()
-
         self._running = True # Parameter which keeps track of the programmes running state.
         self._display_surf = None
         self.size = self.width, self.height = width, height
+
+        self.fps = 60        
+        self.clock = pg.time.Clock()
 
         self.nanimals = 1
         self.nplants = 50
@@ -36,22 +35,8 @@ class Ecosystem:
         # Add animals to the ecosystem
         self.animals = np.array([agent.Agent(self._display_surf) for _ in range(self.nanimals)])
 
-        # Add plants to the ecosystem
-        self.plants = np.array([food.Plant(self._display_surf) for _ in range(self.nplants)])
-
-        # Initialise map of smell intensity
-        if self.smellon:
-            self.smellintensity = 50
-            self.smellrange = 50
-            self.smellcolour = 0 # 0=red, 1=green, 2=blue
-
-            self.plantposition = [plant.position for plant in self.plants]
-            self.smellmap = np.zeros([width, height, 3])
-            self.xx, self.yy = np.meshgrid(np.linspace(0, height, height), np.linspace(0, width, width))
-            for position in self.plantposition:
-                self.smellmap[:, :, 0] += gaussian2D([self.smellintensity, position[::-1], self.smellrange], [self.xx, self.yy])
-            self.smellmap = np.clip(self.smellmap, 0, 255)
-
+        # Add plants to the environment
+        self.environment = environment.Environment(self._display_surf, n_plants=self.nplants, smell_on=True)
 
     def on_event(self, event):
 
@@ -61,25 +46,7 @@ class Ecosystem:
 
     def on_loop(self):
 
-        # ENVIRONMENT
-        # Spawn new food if total number is below nplants
-        self.nnewplants = self.nplants - len(self.plants)
-        if self.nnewplants > 0:
-            self.newplants = np.array([food.Plant(self._display_surf) for _ in range(self.nnewplants)])
-            self.plants = np.hstack([self.plants, self.newplants])
-
-        # Generate a map of smell intensity
-        if self.smellon & self.nnewplants > 0:
-            self.newplantposition = [plant.position for plant in self.newplants]
-            self.eatenplantposition = [plant[0].position for plant in self.eatenplants]
-            for i, position in enumerate(self.newplantposition):
-                self.smellmap[:, :, 0] += gaussian2D([self.smellintensity, position[::-1], self.smellrange], [self.xx, self.yy])
-                self.smellmap[:, :, 0] -= gaussian2D([self.smellintensity, self.eatenplantposition[i][::-1], self.smellrange], [self.xx, self.yy])
-            self.smellmap = np.clip(self.smellmap, 0, 255)
-
-
         # AGENTS
-        self.eatenplants = []
         for animal in self.animals:
             # Order of updating should be:
             # 1. Sensory (e.g. vision) which serves as input for NN
@@ -92,14 +59,13 @@ class Ecosystem:
 
             # Actions
             self.nnoutput = None
-            animal.move(self.nnoutput)
+            animal.move(timestep=self.dt, acceleration=self.nnoutput)
 
             # Reactions
-            self.plantposition = [plant.position for plant in self.plants]
-            self.keepindex = animal.eat(self.plantposition)
-            if self.keepindex.all() == False:
-                self.eatenplants.append(self.plants[self.keepindex == False])
-                self.plants = self.plants[self.keepindex]
+            self.keepindex = animal.eat(self.environment.plant_positions)
+            self.if_plants_remove = self.environment.plants_remove(self.keepindex)
+            if self.if_plants_remove:
+                self.environment.plants_replenish()
                 animal.health += np.sum(self.keepindex == False)
 
         pass
@@ -107,16 +73,12 @@ class Ecosystem:
     def on_render(self):
 
         self._display_surf.fill((0,0,0))
-
-        if self.smellon: pg.surfarray.blit_array(self._display_surf, self.smellmap)
         
+        self.environment.draw(self._display_surf)
+
         for animal in self.animals:
 
            animal.draw(self._display_surf)
-
-        for plant in self.plants:
-
-            plant.draw(self._display_surf)
         
         pg.display.update()
 
@@ -136,23 +98,12 @@ class Ecosystem:
             for event in pg.event.get():
                 self.on_event(event)
 
+            self.dt = self.clock.tick(self.fps)
             self.on_loop()
             self.on_render()
 
-            self.clock.tick(60)
-
         self.on_cleanup()
 
-def gaussian2D(params, x):
-    # Calculates value of gaussian with params = [a, [x, y], c]
-    # at location x = [x, y]
-
-    a, b, c = params
-    X, Y = b
-    x, y = x
-    g = a * np.exp(-0.5 * ((x - X)**2 + (y - Y)**2) / c**2)
-
-    return g
  
 if __name__ == "__main__" :
 
