@@ -40,6 +40,7 @@ class Ecosystem:
         # Add plants to the environment
         self.environment = environment.Environment(self._display_surf, n_plants=self.nplants, smell_on=self.smell_on)
 
+        # Initialise agents
         self.on_render()
         for animal in self.animals:
             animal.state_previous = animal.whiskers(self._display_surf)
