@@ -2,7 +2,7 @@ import numpy as np
 import pygame as pg
 import pygame.draw as draw
 
-import random
+import neuralnet
 
 class Agent:
 
@@ -16,10 +16,18 @@ class Agent:
 
         self.velocity = np.array([0.0, 0.0], dtype='float')#np.random.rand(2) * 10 - 5
         self.maxvelovity = 0.1
-        self.acceleration = np.array([0, 0, 0], dtype='float')
-        self.maxacceleration = 0.1
+        self.acceleration = np.array([0, 0], dtype='float')
+        self.maxacceleration = 1.0
+
+        # Assign a neural net as a brain
+        self.brain = neuralnet.NeuralNet(input_size=5, output_size=9)
+        self.state_previous = None
+        self.action_previous = None
+        self.reward_previous = 0
 
         # Assign variables used in draw()
+        self.whiskersdraw = False
+
         self.surface = surface
         self.bodydrawsize = 6.0
         self.velocitylinelength = 1.5
@@ -27,11 +35,11 @@ class Agent:
         self.outercolour = np.array([255, 255, 255])
 
         # Assign variables for whiskers()
-        self.nwhiskers = 3
-        self.visionrange = 20
+        self.nwhiskers = 5
+        self.visionrange = 30
 
         # Assign variables for eat()
-        self.eatdistance = 20
+        self.eatdistance = 3
 
     def draw(self, surface):
 
@@ -48,11 +56,10 @@ class Agent:
         draw.polygon(surface, self.outercolour, [self.poly1, self.poly2, self.poly3], 1)
 
         # Draw a line in the direction of the velocity vector
-        #draw.line(surface, self.outercolour, self.position, self.position + self.velocity * self.bodydrawsize, 1)
+        # draw.line(surface, self.outercolour, self.position, self.position + self.velocity * self.bodydrawsize, 1)
 
         # Draw whiskers
-        whiskersdraw = True
-        if whiskersdraw == True:
+        if self.whiskersdraw:
             self.whiskersangle = np.linspace(0, 2*np.pi, self.nwhiskers, endpoint=False) + self.orientation
             self.whiskersendpoint = [self.rotate(self.position, self.position + [0, self.visionrange], angle) for angle in self.whiskersangle]
             for endpoint in self.whiskersendpoint:
@@ -60,12 +67,41 @@ class Agent:
                 self.whiskerpixels = [self.wrap_coordinates(surface, pixelcoordinate) for pixelcoordinate in self.whiskerpixels]
                 [surface.set_at(pixel, self.outercolour) for pixel in self.whiskerpixels]
 
+    def action(self, action):
+        '''
+        Table of action values with corresponding acceleration values
+        -------------------      -----------------------------------
+        |  0  |  1  |  2  |      |  [-1,-1]  |  [0,-1]  |  [1,-1]  |
+        -------------------      -----------------------------------
+        |  3  |  4  |  5  |  ==> |  [-1, 0]  |  [0, 0]  |  [1, 0]  |
+        -------------------      -----------------------------------
+        |  6  |  7  |  8  |      |  [-1, 1]  |  [0, 1]  |  [1, 1]  |
+        -------------------      -----------------------------------
+        '''
+        if action == 0:
+            self.acceleration = np.array([-1,-1])
+        elif action == 1:
+            self.acceleration = np.array([0,-1])
+        elif action == 2:
+            self.acceleration = np.array([1,-1])
+        elif action == 3:
+            self.acceleration = np.array([-1,0])
+        elif action == 4:
+            self.acceleration = np.array([0,0])
+        elif action == 5:
+            self.acceleration = np.array([1,0])
+        elif action == 6:
+            self.acceleration = np.array([-1,1])
+        elif action == 7:
+            self.acceleration = np.array([0,1])
+        elif action == 8:
+            self.acceleration = np.array([1,1])        
+
     def move(self, timestep, acceleration=None):
 
-        if acceleration == None:
-            self.acceleration = np.zeros(2) + (np.random.rand(2) * 2 -1)
-        else:
+        if acceleration != None:
             self.acceleration = acceleration
+            
         self.velocity += self.normalised(self.acceleration) * self.maxacceleration * timestep
         self.position += self.normalised(self.velocity) * self.maxvelovity * timestep
         self.position = self.wrap_coordinates(self.surface, self.position)
@@ -84,6 +120,7 @@ class Agent:
             if self.whiskeroutput > 0: 
                 self.whiskeroutput = 1
             self.whiskersignal[i] = self.whiskeroutput
+        self.whiskersignal.reshape((1, -1))
 
         return self.whiskersignal
 

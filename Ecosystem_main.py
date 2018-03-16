@@ -15,7 +15,7 @@ class Ecosystem:
         self._display_surf = None
         self.size = self.width, self.height = width, height
 
-        self.fps = 60        
+        self.fps = 60
         self.clock = pg.time.Clock()
 
         self.nanimals = 1
@@ -25,8 +25,9 @@ class Ecosystem:
 
         self._running = True
 
-        # Switches for optional features
-        self.smellon = True
+        # Switches for features
+        self.training = True
+        self.smell_on = False
  
         # Initialise the pygame display and define its surface parameters
         pg.init()
@@ -36,7 +37,11 @@ class Ecosystem:
         self.animals = np.array([agent.Agent(self._display_surf) for _ in range(self.nanimals)])
 
         # Add plants to the environment
-        self.environment = environment.Environment(self._display_surf, n_plants=self.nplants, smell_on=True)
+        self.environment = environment.Environment(self._display_surf, n_plants=self.nplants, smell_on=self.smell_on)
+
+        self.on_render()
+        for animal in self.animals:
+            animal.state_previous = animal.whiskers(self._display_surf)
 
     def on_event(self, event):
 
@@ -46,27 +51,61 @@ class Ecosystem:
 
     def on_loop(self):
 
-        # AGENTS
-        for animal in self.animals:
-            # Order of updating should be:
-            # 1. Sensory (e.g. vision) which serves as input for NN
-            # 2. Action (e.g. move) which is the ouput of the NN given the available information
-            # 3. Reaction (e.g. eat) that follows the given output
-            
-            # Senses
-            self.nninput = animal.whiskers(self._display_surf)
-            #print(self.nninput)
+        if not self.training:
+            # AGENTS
+            for animal in self.animals:
+                # Order of updating should be:
+                # 1. Sensory (e.g. vision) which serves as input for NN
+                # 2. Action (e.g. move) which is the ouput of the NN given the available information
+                # 3. Reaction (e.g. eat) that follows the given output
+                
+                # Senses
+                self.state = animal.whiskers(self._display_surf)
 
-            # Actions
-            self.nnoutput = None
-            animal.move(timestep=self.dt, acceleration=self.nnoutput)
+                # Actions
+                # self.action = animal.brain.predict(self.state)
+                animal.move(timestep=self.dt)
 
-            # Reactions
-            self.keepindex = animal.eat(self.environment.plant_positions)
-            self.if_plants_remove = self.environment.plants_remove(self.keepindex)
-            if self.if_plants_remove:
-                self.environment.plants_replenish()
-                animal.health += np.sum(self.keepindex == False)
+                # Reactions
+                self.reward = 0
+                self.keepindex = animal.eat(self.environment.plant_positions)
+                if not self.keepindex.all():
+                    self.environment.plants_remove(self.keepindex)
+                    self.environment.plants_replenish()
+                    self.reward = np.sum(self.keepindex == False)
+
+        if self.training:
+            # AGENTS
+            for animal in self.animals:
+                # Order of updating should be:
+                # 1. Action (e.g. move) given the state of previous loop
+                # 2. Reaction (e.g. eat) receive reward given action
+                # 3. Observe (e.g whiskers) receive new state given action 
+
+                # Observe
+                self.state = animal.whiskers(self._display_surf)
+
+                animal.brain.remember([animal.state_previous, animal.action_previous, animal.reward_previous, self.state])
+                self.input_train, self.target_train = animal.brain.get_batch()
+                # animal.loss += animal.brain.train_on_batch(animal.brain.get_batch())[0]
+                animal.state_previous = self.state
+
+                # Actions
+                self.action = animal.brain.predict(animal.state_previous)
+                animal.action(self.action)
+                animal.move(timestep=self.dt)
+
+                # Reactions
+                self.reward = 0
+                self.keepindex = animal.eat(self.environment.plant_positions)
+                if not self.keepindex.all():
+                    self.environment.plants_remove(self.keepindex)
+                    self.environment.plants_replenish()
+                    self.reward = np.sum(self.keepindex == False)
+
+                animal.action_previous = self.action
+                animal.reward_previous = self.reward
+                
 
         pass
 
