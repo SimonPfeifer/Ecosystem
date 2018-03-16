@@ -1,6 +1,7 @@
 import numpy as np
 import pygame as pg
 import pygame.draw as draw
+import matplotlib.pyplot as plt
 
 import environment, agent, food
 
@@ -43,6 +44,10 @@ class Ecosystem:
         for animal in self.animals:
             animal.state_previous = animal.whiskers(self._display_surf)
 
+        # Neural net diagnostics
+        self.count = 0
+        self.loss_array = []
+
     def on_event(self, event):
 
         if event.type == pg.QUIT:
@@ -50,25 +55,6 @@ class Ecosystem:
             self._running = False
 
     def on_loop(self):
-
-        if not self.training:
-            for animal in self.animals:
-                # AGENTS                
-                # Senses
-                self.state = animal.whiskers(self._display_surf)
-
-                # Actions
-                self.action = animal.brain.predict(self.state)
-                animal.action(self.action)
-                animal.move(timestep=self.dt)
-
-                # Reactions
-                self.reward = 0
-                self.keepindex = animal.eat(self.environment.plant_positions)
-                if not self.keepindex.all():
-                    self.environment.plants_remove(self.keepindex)
-                    self.environment.plants_replenish()
-                    self.reward = np.sum(self.keepindex == False)
 
         if self.training:
             for animal in self.animals:
@@ -104,7 +90,32 @@ class Ecosystem:
                 animal.state_previous = self.state
                 animal.action_previous = self.action
                 animal.reward_previous = self.reward
+
+                # Neural net diagnostics
+                self.count += 1
+                if self.count == 100:
+                    self.count = 0
+                    self.loss_array.append(animal.brain.loss)
+                    print(animal.brain.loss)
+                    animal.brain.loss = 0
                 
+        if not self.training:
+            for animal in self.animals:
+                # Senses
+                self.state = animal.whiskers(self._display_surf)
+
+                # Actions
+                self.action = animal.brain.predict(self.state)
+                animal.action(self.action)
+                animal.move(timestep=self.dt)
+
+                # Reactions
+                self.reward = 0
+                self.keepindex = animal.eat(self.environment.plant_positions)
+                if not self.keepindex.all():
+                    self.environment.plants_remove(self.keepindex)
+                    self.environment.plants_replenish()
+                    self.reward = np.sum(self.keepindex == False)
 
         pass
 
@@ -123,6 +134,10 @@ class Ecosystem:
         pass
 
     def on_cleanup(self):
+
+        plt.plot(range(len(self.loss_array)), self.loss_array)
+        plt.ylabel('Loss')
+        plt.show()
 
         pg.quit()
  
