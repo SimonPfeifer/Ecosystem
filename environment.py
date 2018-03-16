@@ -46,16 +46,10 @@ class Environment:
         self.plants = self.plants[keep_index]
         self.plant_positions = self.plant_positions[keep_index]
 
-        if keep_index.all():
-            return False
-
-        else:
-            if self.smell_on:
-                for position in self.plant_positions_removed:
-                    self.smellmap[:, :, self.smellcolour] -= gaussian2D([self.smellintensity, position[::-1], self.smellrange], [self.xx, self.yy])
+        if self.smell_on:
+            for position in self.plant_positions_removed:
+                self.smellmap[:, :, self.smellcolour] -= gaussian2D([self.smellintensity, position[::-1], self.smellrange], [self.xx, self.yy])
             self.smellmap = np.clip(self.smellmap, 0, 255)
-
-            return True
 
     def plants_replenish(self):
 
