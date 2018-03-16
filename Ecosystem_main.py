@@ -52,18 +52,14 @@ class Ecosystem:
     def on_loop(self):
 
         if not self.training:
-            # AGENTS
             for animal in self.animals:
-                # Order of updating should be:
-                # 1. Sensory (e.g. vision) which serves as input for NN
-                # 2. Action (e.g. move) which is the ouput of the NN given the available information
-                # 3. Reaction (e.g. eat) that follows the given output
-                
+                # AGENTS                
                 # Senses
                 self.state = animal.whiskers(self._display_surf)
 
                 # Actions
-                # self.action = animal.brain.predict(self.state)
+                self.action = animal.brain.predict(self.state)
+                animal.action(self.action)
                 animal.move(timestep=self.dt)
 
                 # Reactions
@@ -75,8 +71,8 @@ class Ecosystem:
                     self.reward = np.sum(self.keepindex == False)
 
         if self.training:
-            # AGENTS
             for animal in self.animals:
+                # AGENTS
                 # Order of updating should be:
                 # 1. Action (e.g. move) given the state of previous loop
                 # 2. Reaction (e.g. eat) receive reward given action
@@ -85,9 +81,10 @@ class Ecosystem:
                 # Observe
                 self.state = animal.whiskers(self._display_surf)
 
+                # Train
                 animal.brain.remember([animal.state_previous, animal.action_previous, animal.reward_previous, self.state])
                 self.input_train, self.target_train = animal.brain.get_batch()
-                # animal.loss += animal.brain.train_on_batch(animal.brain.get_batch())[0]
+                animal.brain.loss += animal.brain.model.train_on_batch(self.input_train, self.target_train)
                 animal.state_previous = self.state
 
                 # Actions
@@ -103,6 +100,8 @@ class Ecosystem:
                     self.environment.plants_replenish()
                     self.reward = np.sum(self.keepindex == False)
 
+                # Store values for next interation
+                animal.state_previous = self.state
                 animal.action_previous = self.action
                 animal.reward_previous = self.reward
                 

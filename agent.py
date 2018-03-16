@@ -17,7 +17,7 @@ class Agent:
         self.velocity = np.array([0.0, 0.0], dtype='float')#np.random.rand(2) * 10 - 5
         self.maxvelovity = 0.1
         self.acceleration = np.array([0, 0], dtype='float')
-        self.maxacceleration = 1.0
+        self.maxacceleration = 0.001
 
         # Assign a neural net as a brain
         self.brain = neuralnet.NeuralNet(input_size=5, output_size=9)
@@ -101,9 +101,11 @@ class Agent:
 
         if acceleration != None:
             self.acceleration = acceleration
-            
-        self.velocity += self.normalised(self.acceleration) * self.maxacceleration * timestep
-        self.position += self.normalised(self.velocity) * self.maxvelovity * timestep
+        
+        self.acceleration = self.normalised(self.acceleration) * self.maxacceleration
+        self.velocity += self.acceleration * timestep
+        self.velocity = self.normalised(self.velocity) * self.maxvelovity
+        self.position += self.velocity * timestep
         self.position = self.wrap_coordinates(self.surface, self.position)
         self.acceleration *= 0
 
