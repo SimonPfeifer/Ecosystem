@@ -66,8 +66,10 @@ class Environment:
 
 
 def gaussian2D(params, x):
-    # Calculates value of gaussian with params = [a, [x, y], c]
-    # at location x = [x, y]
+    '''
+    Calculates value of gaussian with params = [a, [x, y], c]
+    at location x = [x, y] with amplitude (a) and width (c).
+    '''
 
     a, b, c = params
     X, Y = b
