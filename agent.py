@@ -2,7 +2,7 @@ import numpy as np
 import pygame as pg
 import pygame.draw as draw
 
-import random
+import neuralnet
 
 class Agent:
 

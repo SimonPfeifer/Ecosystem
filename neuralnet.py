@@ -59,7 +59,6 @@ class NeuralNet:
             targets = np.zeros((inputs.shape[0], self.output_size))
             for i, idx in enumerate(np.random.randint(0, len_memory, size=inputs.shape[0])):
                 state_previous, action, reward, state = self.memory[idx]
-                print(np.shape(targets))
 
                 inputs[i] = state_previous
                 targets[i] = self.model.predict(state.reshape((1, -1)))[0]

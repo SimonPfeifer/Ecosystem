@@ -1,10 +1,9 @@
 import numpy as np
 import pygame as pg
 import pygame.draw as draw
+import matplotlib.pyplot as plt
 
-#from pygame.locals import *
-
-import agent, food
+import environment, agent, food
 
 width = 750
 height = 500
@@ -17,11 +16,11 @@ class Ecosystem:
         self._display_surf = None
         self.size = self.width, self.height = width, height
 
-        self.fps = 60        
+        self.fps = 60
         self.clock = pg.time.Clock()
 
-        self.n_animals = 1
-        self.n_plants = 50
+        self.nanimals = 1
+        self.nplants = 50
  
     def on_init(self):
 
@@ -45,6 +44,10 @@ class Ecosystem:
         self.on_render()
         for animal in self.animals:
             animal.state_previous = animal.sense(self._display_surf, smell_map=self.environment.smell_map)
+
+        # Neural net diagnostics
+        self.count = 0
+        self.loss_array = []
 
     def on_event(self, event):
 
@@ -98,19 +101,18 @@ class Ecosystem:
                     print(animal.brain.loss)
                     animal.brain.loss = 0
 
+
         pass
 
     def on_render(self):
 
         self._display_surf.fill((0,0,0))
         
+        self.environment.draw(self._display_surf)
+
         for animal in self.animals:
 
            animal.draw(self._display_surf)
-
-        for plant in self.plants:
-
-            plant.draw(self._display_surf)
         
         pg.display.update()
 
