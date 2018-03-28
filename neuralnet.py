@@ -26,8 +26,8 @@ class NeuralNet:
 
         if json_file_path == None:
             model = Sequential()
-            model.add(Dense(24, input_dim=self.input_size, activation='relu'))
-            model.add(Dense(24, activation='relu'))
+            model.add(Dense(128, input_dim=self.input_size, activation='relu'))
+            model.add(Dense(128, activation='relu'))
             model.add(Dense(self.output_size, activation='linear'))
             model.compile(loss='mse', optimizer=Adam(lr=self.learning_rate))
 
@@ -39,7 +39,7 @@ class NeuralNet:
     def predict(self, state):
         
         if np.random.rand() <= self.epsilon:
-            action = np.random.rand(len(state))
+            action = np.random.rand(self.output_size)
             action = np.argmax(action)
         else:
             Q = self.model.predict(state.reshape((1, -1)))
@@ -59,6 +59,7 @@ class NeuralNet:
             targets = np.zeros((inputs.shape[0], self.output_size))
             for i, idx in enumerate(np.random.randint(0, len_memory, size=inputs.shape[0])):
                 state_previous, action, reward, state = self.memory[idx]
+                print(np.shape(targets))
 
                 inputs[i] = state_previous
                 targets[i] = self.model.predict(state.reshape((1, -1)))[0]

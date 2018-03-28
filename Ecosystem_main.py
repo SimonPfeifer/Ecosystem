@@ -27,19 +27,24 @@ class Ecosystem:
 
         self._running = True
 
-        # Switches for optional features
-        self.smell_on = False
-
+        # Switches for features
+        self.training = True
+        self.smell_on = True
+ 
         # Initialise the pygame display and define its surface parameters
         pg.init()
         self._display_surf = pg.display.set_mode(self.size, pg.HWSURFACE | pg.DOUBLEBUF)
 
         # Add animals to the ecosystem
-        self.animals = np.array([agent.Agent(self._display_surf) for _ in range(self.n_animals)])
+        self.animals = np.array([agent.Agent(self._display_surf, smell_on=self.smell_on) for _ in range(self.nanimals)])
 
-        # Add plants to the ecosystem
-        self.plants = np.array([food.Plant(self._display_surf) for _ in range(self.n_plants)])
+        # Add plants to the environment
+        self.environment = environment.Environment(self._display_surf, n_plants=self.nplants, smell_on=self.smell_on)
 
+        # Initialise agents
+        self.on_render()
+        for animal in self.animals:
+            animal.state_previous = animal.sense(self._display_surf, smell_map=self.environment.smell_map)
 
     def on_event(self, event):
 
@@ -49,33 +54,49 @@ class Ecosystem:
 
     def on_loop(self):
 
-        # ENVIRONMENT
-        # Spawn new food if total number is below n_plants
-        self.n_new_plants = self.n_plants - len(self.plants)
-        if self.n_new_plants > 0:
-            self.new_plants = np.array([food.Plant(self._display_surf) for _ in range(self.n_new_plants)])
-            self.plants = np.hstack([self.plants, self.new_plants])
-        # AGENTS
         for animal in self.animals:
+            # AGENTS
             # Order of updating should be:
-            # 1. Sensory (e.g. vision) which serves as input for NN
-            # 2. Action (e.g. move) which is the ouput of the NN given the available information
-            # 3. Reaction (e.g. eat) that follows the given output
-            
-            # Senses
-            self.nn_input = animal.whiskers(self._display_surf)
-            print(self.nn_input)
+            # 1. Action (e.g. move) given the state of previous loop
+            # 2. Reaction (e.g. eat) receive reward given action
+            # 3. Observe (e.g whiskers) receive new state given action 
+
+            # Observe
+            self.state = animal.sense(self._display_surf, smell_map=self.environment.smell_map)
+
+            if self.training:
+                # Train
+                animal.brain.remember([animal.state_previous, animal.action_previous, animal.reward_previous, self.state])
+                self.input_train, self.target_train = animal.brain.get_batch()
+                animal.brain.loss += animal.brain.model.train_on_batch(self.input_train, self.target_train)
+                animal.state_previous = self.state
 
             # Actions
-            self.nn_output = None
-            animal.move(timestep=self.dt, acceleration=self.nn_output)
+            self.action = animal.brain.predict(animal.state_previous)
+            animal.action(self.action)
+            animal.move(timestep=self.dt)
 
             # Reactions
-            self.plant_positions = [plant.position for plant in self.plants]
-            self.keep_index = animal.eat(self.plant_positions)
-            if self.keep_index.all() == False:
-                self.plants = self.plants[self.keep_index]
-                animal.health += np.sum(self.keep_index == False)
+            self.reward = 0
+            self.keepindex = animal.eat(self.environment.plant_positions)
+            if not self.keepindex.all():
+                self.environment.plants_remove(self.keepindex)
+                self.environment.plants_replenish()
+                self.reward = np.sum(self.keepindex == False)
+
+            if self.training:
+                # Store values for next interation
+                animal.state_previous = self.state
+                animal.action_previous = self.action
+                animal.reward_previous = self.reward
+
+                # Neural net diagnostics
+                self.count += 1
+                if self.count == 100:
+                    self.count = 0
+                    self.loss_array.append(animal.brain.loss)
+                    print(animal.brain.loss)
+                    animal.brain.loss = 0
 
         pass
 
@@ -96,6 +117,11 @@ class Ecosystem:
         pass
 
     def on_cleanup(self):
+
+        plt.plot(range(len(self.loss_array)), self.loss_array)
+        plt.yscale('log')
+        plt.ylabel('Loss')
+        plt.show()
 
         pg.quit()
  
