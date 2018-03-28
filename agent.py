@@ -6,7 +6,7 @@ import neuralnet
 
 class Agent:
 
-    def __init__(self, surface):
+    def __init__(self, surface, smell_on=False):
 
         # Assign physical properties
         self.health = 1
@@ -15,58 +15,71 @@ class Agent:
         self.position = np.random.rand(2) * surface.get_size()
 
         self.velocity = np.array([0.0, 0.0], dtype='float')#np.random.rand(2) * 10 - 5
-        self.maxvelovity = 0.1
+        self.velocity_max = 0.1
 
         self.acceleration = np.array([0, 0], dtype='float')
-        self.maxacceleration = 0.001
+        self.acceleration_max = 0.001
+
+        # Assign variables used in draw()
+        self.draw_velocity = False
+        self.draw_whiskers = False
+
+        self.surface = surface
+        self.body_draw_size = 6.0
+        self.velocity_line_length = 1.5
+        self.colour_inner = np.random.rand(3) * 255
+        self.colour_outer = np.array([255, 255, 255])
+
+        # Assign variables for whiskers()
+        self.whiskers_on = True
+        self.n_whiskers = 5
+        self.vision_range = 30
+
+        # Assign variables for smell()
+        self.smell_on = smell_on
+        self.smell_memory_length = 5
+        self.smell_memory = range(self.smell_memory_length)
+
+        # Assign variables for eat()
+        self.eat_range = 3
 
         # Assign a neural net as a brain
-        self.brain = neuralnet.NeuralNet(input_size=5, output_size=9)
+        self.nn_input_size = 0
+        if self.whiskers_on:
+            self.nn_input_size += self.n_whiskers
+        if self.smell_on:
+            self.nn_input_size += self.smell_memory_length
+        self.brain = neuralnet.NeuralNet(input_size=self.nn_input_size, output_size=9)
         self.state_previous = None
         self.action_previous = None
         self.reward_previous = 0
-
-        # Assign variables used in draw()
-        self.whiskersdraw = False
-
-        self.surface = surface
-        self.bodydrawsize = 6.0
-        self.velocitylinelength = 1.5
-        self.innercolour = np.random.rand(3) * 255
-        self.outercolour = np.array([255, 255, 255])
-
-        # Assign variables for whiskers()
-        self.nwhiskers = 5
-        self.visionrange = 30
-
-        # Assign variables for eat()
-        self.eatdistance = 3
 
     def draw(self, surface):
 
         # Draw a triangle with animal position at the tip
         self.poly1 = self.position
-        self.poly2 = [self.position[0] - 1.0 * self.bodydrawsize, self.position[1] - 3.0 * self.bodydrawsize]
-        self.poly3 = [self.position[0] + 1.0 * self.bodydrawsize, self.position[1] - 3.0 * self.bodydrawsize]
+        self.poly2 = [self.position[0] - 1.0 * self.body_draw_size, self.position[1] - 3.0 * self.body_draw_size]
+        self.poly3 = [self.position[0] + 1.0 * self.body_draw_size, self.position[1] - 3.0 * self.body_draw_size]
 
         self.orientation = np.arctan2(0, 1) - np.arctan2(self.velocity[0], self.velocity[1])
         self.poly2 = self.rotate(self.poly1, self.poly2, self.orientation)
         self.poly3 = self.rotate(self.poly1, self.poly3, self.orientation)
     
-        draw.polygon(surface, self.innercolour, [self.poly1, self.poly2, self.poly3], 0)
-        draw.polygon(surface, self.outercolour, [self.poly1, self.poly2, self.poly3], 1)
+        draw.polygon(surface, self.colour_inner, [self.poly1, self.poly2, self.poly3], 0)
+        draw.polygon(surface, self.colour_outer, [self.poly1, self.poly2, self.poly3], 1)
 
-        # Draw a line in the direction of the velocity vector
-        # draw.line(surface, self.outercolour, self.position, self.position + self.velocity * self.bodydrawsize, 1)
+        if self.draw_velocity:
+            # Draw a line in the direction of the velocity vector
+            draw.line(surface, self.colour_outer, self.position, self.position + self.velocity * self.body_draw_size, 1)
 
         # Draw whiskers
-        if self.whiskersdraw:
-            self.whiskersangle = np.linspace(0, 2*np.pi, self.nwhiskers, endpoint=False) + self.orientation
-            self.whiskersendpoint = [self.rotate(self.position, self.position + [0, self.visionrange], angle) for angle in self.whiskersangle]
-            for endpoint in self.whiskersendpoint:
-                self.whiskerpixels = self.get_line(self.position, endpoint)
-                self.whiskerpixels = [self.wrap_coordinates(surface, pixelcoordinate) for pixelcoordinate in self.whiskerpixels]
-                [surface.set_at(pixel, self.outercolour) for pixel in self.whiskerpixels]
+        if self.draw_whiskers:
+            self.whiskers_angle = np.linspace(0, 2*np.pi, self.n_whiskers, endpoint=False) + self.orientation
+            self.whisker_endpoints = [self.rotate(self.position, self.position + [0, self.vision_range], angle) for angle in self.whiskers_angle]
+            for endpoint in self.whisker_endpoints:
+                self.whisker_pixels = self.get_line(self.position, endpoint)
+                self.whisker_pixels = [self.wrap_coordinates(surface, pixel_coord) for pixel_coord in self.whisker_pixels]
+                [surface.set_at(pixel, self.colour_outer) for pixel in self.whisker_pixels]
 
     def action(self, action):
         '''
@@ -103,37 +116,54 @@ class Agent:
         if acceleration != None:
             self.acceleration = acceleration
 
-        self.acceleration = self.normalised(self.acceleration) * self.maxacceleration
+        self.acceleration = self.normalised(self.acceleration) * self.acceleration_max
         self.velocity += self.acceleration * timestep
-        self.velocity = self.normalised(self.velocity) * self.maxvelovity
+        self.velocity = self.normalised(self.velocity) * self.velocity_max
         self.position += self.velocity * timestep
         self.position = self.wrap_coordinates(self.surface, self.position)
         self.acceleration *= 0
 
+    def sense(self, surface, smell_map=None):
+
+        self.sense_output = []
+        if self.whiskers_on:
+            self.sense_output += list(self.whiskers(surface))
+        if self.smell_on and type(smell_map) != None:
+            self.smell(smell_map)
+            self.sense_output += list(self.smell_memory)
+
+        return np.array(self.sense_output)
+
     def whiskers(self, surface):
 
-        self.whiskersignal = np.zeros(self.nwhiskers)
-        self.whiskersangle = np.linspace(0, 2*np.pi, self.nwhiskers, endpoint=False) + self.orientation
-        self.whiskersendpoints = [self.rotate(self.position, self.position + [0, self.visionrange], angle) for angle in self.whiskersangle]
-        for i, endpoint in enumerate(self.whiskersendpoints):
-            self.whiskerpixels = self.get_line(self.position, endpoint)
-            self.whiskerpixels = [self.wrap_coordinates(surface, pixelcoordinate) for pixelcoordinate in self.whiskerpixels]
-            self.pixelvalues = [surface.get_at(pixel)[:-1] for pixel in self.whiskerpixels]
-            self.whiskeroutput = np.sum(self.pixelvalues)
-            if self.whiskeroutput > 0: 
-                self.whiskeroutput = 1
-            self.whiskersignal[i] = self.whiskeroutput
-        self.whiskersignal.reshape((1, -1))
+        self.whisker_signal = np.zeros(self.n_whiskers)
+        self.whiskers_angle = np.linspace(0, 2*np.pi, self.n_whiskers, endpoint=False) + self.orientation
+        self.whiskers_endpoints = [self.rotate(self.position, self.position + [0, self.vision_range], angle) for angle in self.whiskers_angle]
+        for i, endpoint in enumerate(self.whiskers_endpoints):
+            self.whisker_pixels = self.get_line(self.position, endpoint)
+            self.whisker_pixels = [self.wrap_coordinates(surface, pixel_coord) for pixel_coord in self.whisker_pixels]
+            self.pixel_values = [surface.get_at(pixel)[:-1] for pixel in self.whisker_pixels]
+            self.whisker_output = np.sum(self.pixel_values)
+            if self.whisker_output > 0: 
+                self.whisker_output = 1
+            self.whisker_signal[i] = self.whisker_output
+        self.whisker_signal.reshape((1, -1))
 
-        return self.whiskersignal
+        return self.whisker_signal
 
-    def eat(self, foodposition):
+    def smell(self, smell_map):
 
-        self.deltaposition = np.array(foodposition - self.position)
-        self.fooddistance = np.sqrt(np.sum(self.deltaposition * self.deltaposition, axis=1))
-        self.noteatindex = self.fooddistance > self.eatdistance
+        self.smell_memory[1:] = self.smell_memory[:-1]
+        self.smell_memory[0] = np.sum(smell_map[int(self.position[0]), int(self.position[1])])
 
-        return self.noteatindex
+    def eat(self, food_position):
+
+        self.delta_position = np.array(food_position - self.position)
+        self.food_distance = np.sqrt(np.sum(self.delta_position * self.delta_position, axis=1))
+        self.not_eat_index = self.food_distance > self.eat_range
+
+        return self.not_eat_index
+
 
     def normalised(self, a, axis=-1, order=2):
         l2 = np.atleast_1d(np.linalg.norm(a, order, axis))
@@ -204,16 +234,3 @@ class Agent:
             line.reverse()
 
         return line[1:]
-
-
-
-
-
-
-
-
-
-
-
-
-

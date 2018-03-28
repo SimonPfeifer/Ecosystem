@@ -24,17 +24,19 @@ class Environment:
             self.smellcolour = 0 # 0=red, 1=green, 2=blue
 
             self.plantposition = [plant.position for plant in self.plants]
-            self.smellmap = np.zeros([self.width, self.height, 3])
+            self.smell_map = np.zeros([self.width, self.height, 3])
             self.xx, self.yy = np.meshgrid(np.linspace(0, self.height, self.height), np.linspace(0, self.width, self.width))
             for position in self.plantposition:
-                self.smellmap[:, :, self.smellcolour] += gaussian2D([self.smellintensity, position[::-1], self.smellrange], [self.xx, self.yy])
-            self.smellmap = np.clip(self.smellmap, 0, 255)
+                self.smell_map[:, :, self.smellcolour] += gaussian2D([self.smellintensity, position[::-1], self.smellrange], [self.xx, self.yy])
+            self.smell_map = np.clip(self.smell_map, 0, 255)
+        else:
+            self.smell_map = None
 
 
     def draw(self, surface):
 
-        if self.smell_on:
-            pg.surfarray.blit_array(surface, self.smellmap)
+        # if self.smell_on:
+        #     pg.surfarray.blit_array(surface, self.smell_map)
 
         for plant in self.plants:
             plant.draw(surface)
@@ -48,8 +50,8 @@ class Environment:
 
         if self.smell_on:
             for position in self.plant_positions_removed:
-                self.smellmap[:, :, self.smellcolour] -= gaussian2D([self.smellintensity, position[::-1], self.smellrange], [self.xx, self.yy])
-            self.smellmap = np.clip(self.smellmap, 0, 255)
+                self.smell_map[:, :, self.smellcolour] -= gaussian2D([self.smellintensity, position[::-1], self.smellrange], [self.xx, self.yy])
+            self.smell_map = np.clip(self.smell_map, 0, 255)
 
     def plants_replenish(self):
 
@@ -61,8 +63,8 @@ class Environment:
 
         if self.smell_on:
             for position in self.new_plant_positions:
-                self.smellmap[:, :, self.smellcolour] += gaussian2D([self.smellintensity, position[::-1], self.smellrange], [self.xx, self.yy])
-            self.smellmap = np.clip(self.smellmap, 0, 255)
+                self.smell_map[:, :, self.smellcolour] += gaussian2D([self.smellintensity, position[::-1], self.smellrange], [self.xx, self.yy])
+            self.smell_map = np.clip(self.smell_map, 0, 255)
 
 
 def gaussian2D(params, x):
