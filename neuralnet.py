@@ -1,12 +1,14 @@
+import os
+import errno
 import numpy as np
 from keras.models import Sequential
 from keras.layers.core import Dense
 from keras.optimizers import Adam
-from keras.models import model_from_json
+from keras.models import load_model
 
 class NeuralNet:
     
-    def __init__(self, input_size, output_size, json_file_path=None):
+    def __init__(self, input_size, output_size, model_filepath=None):
 
         self.input_size = input_size
         self.output_size = output_size
@@ -15,16 +17,16 @@ class NeuralNet:
         self.learning_rate = 0.2
         self.epsilon = 0.1
         
-        self.model = self._model_init(json_file_path)
+        self.model = self._model_init(model_filepath)
         
         self.memory = list()
         self.batch_size = 50
         self.epoch_count = 0
         self.loss = 0
 
-    def _model_init(self, json_file_path):
+    def _model_init(self, model_filepath):
 
-        if json_file_path == None:
+        if model_filepath == None:
             model = Sequential()
             model.add(Dense(128, input_dim=self.input_size, activation='relu'))
             model.add(Dense(128, activation='relu'))
@@ -32,7 +34,7 @@ class NeuralNet:
             model.compile(loss='mse', optimizer=Adam(lr=self.learning_rate))
 
         else:
-            model = model_from_json(json_file_path)
+            model = load_model(model_filepath)
 
         return model
 
@@ -68,3 +70,16 @@ class NeuralNet:
                 targets[i, action] = reward + self.discount * Q_max
             
             return inputs, targets
+
+    def save_model(self, filepath, model_index):
+
+        model_name = 'model_%03d' % model_index
+        filepath = filepath + model_name
+        if not os.path.exists(os.path.dirname(filepath)):
+            try:
+                os.makedirs(os.path.dirname(filepath))
+            except OSError as exc: # Guard against race condition
+                if exc.errno != errno.EEXIST:
+                    raise
+
+        self.model.save(filepath)
