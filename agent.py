@@ -6,7 +6,7 @@ import neuralnet
 
 class Agent:
 
-    def __init__(self, surface, smell_on=False):
+    def __init__(self, surface, model_filepath=None, whiskers_on=False, smell_on=False):
 
         # Assign physical properties
         self.health = 1
@@ -31,8 +31,8 @@ class Agent:
         self.colour_outer = np.array([255, 255, 255])
 
         # Assign variables for whiskers()
-        self.whiskers_on = True
-        self.n_whiskers = 5
+        self.whiskers_on = whiskers_on
+        self.n_whiskers = 15
         self.vision_range = 30
 
         # Assign variables for smell()
@@ -49,7 +49,8 @@ class Agent:
             self.nn_input_size += self.n_whiskers
         if self.smell_on:
             self.nn_input_size += self.smell_memory_length
-        self.brain = neuralnet.NeuralNet(input_size=self.nn_input_size, output_size=9)
+        self.model_filepath = model_filepath
+        self.brain = neuralnet.NeuralNet(input_size=self.nn_input_size, output_size=9, model_filepath=self.model_filepath)
         self.state_previous = None
         self.action_previous = None
         self.reward_previous = 0
