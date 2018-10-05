@@ -33,19 +33,21 @@ class Ecosystem:
         self.whiskers_on = True
         self.smell_on = False
 
+        self.progress_bar = False
+
         # Neural net diagnostics
         # General
-        self.model_filepath_load = './models/testing/whiskers_15/model'
+        self.model_filepath_load = './models/testing/smell_lr_0001/model'
         self.counts_per_epoch = 100
         self.count = 0
         self.epoch = 0
 
         # Training
-        self.model_filepath_save = './models/testing/whiskers_15/'
-        self.epoch_train = 150
+        self.model_filepath_save = './models/testing/smell_lr_0001/model'
+        self.epoch_train = 50
 
         # Testing
-        self.epoch_test = 50
+        self.epoch_test = 200
         self.reward_total = 0
         self.loss_array = np.zeros(self.epoch_test)
         self.actions_array = np.zeros(self.counts_per_epoch*self.epoch_test)
@@ -114,12 +116,17 @@ class Ecosystem:
             if self.testing:
                 self.actions_array[self.count * self.epoch] = self.action
     
-            # Log quantity every epoch            
+            # Actions every epoch            
             if self.count == self.counts_per_epoch:
                 self.count = 0
-                if self.testing:
+                if self.training:
                     self.loss_array[self.epoch] = animal.brain.loss
                     animal.brain.loss = 0
+                    if self.progress_bar:
+                        self.pbar.update(1)
+                if self.testing:
+                    if self.progress_bar:
+                        self.pbar.update(1)
                 self.epoch += 1
             self.count += 1
 
@@ -132,11 +139,17 @@ class Ecosystem:
                 plt.plot(range(len(self.loss_array)), self.loss_array)
                 plt.yscale('log')
                 plt.ylabel('Loss')
-                plt.savefig(self.model_filepath_save + 'loss_over_epochs.png')
+                plt.xlabel('Epoch')
+                plt.savefig(self.model_filepath_save + '_train_loss_per_epoch.png')
 
             # Output basic test results after number of test epochs reached and then quit
             if self.testing and self.epoch == self.epoch_test:
                 print('Total reward: ', self.reward_total)
+
+                plt.hist(self.actions_array, np.arange(-0.5, 10.5, 1))
+                plt.xlabel('action')
+                plt.savefig(self.model_filepath_save + '_test_action_histogram.png')
+
                 self._running = False
 
 
@@ -158,6 +171,8 @@ class Ecosystem:
 
     def on_cleanup(self):
 
+        if self.progress_bar:
+            self.pbar.close()
         pg.quit()
  
     def on_execute(self):
