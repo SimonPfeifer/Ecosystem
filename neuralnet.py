@@ -14,7 +14,7 @@ class NeuralNet:
         self.output_size = output_size
         self.max_memory = 1000
         self.discount = 0.9
-        self.learning_rate = 0.2
+        self.learning_rate = 0.0001
         self.epsilon = 0.1
         
         self.model = self._model_init(model_filepath)
@@ -73,8 +73,7 @@ class NeuralNet:
 
     def save_model(self, filepath, model_index):
 
-        model_name = 'model_%03d' % model_index
-        filepath = filepath + model_name
+        filepath = filepath + '_%03d' % model_index
         if not os.path.exists(os.path.dirname(filepath)):
             try:
                 os.makedirs(os.path.dirname(filepath))
