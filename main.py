@@ -27,8 +27,8 @@ class Ecosystem:
         self._running = True
 
         # Switches for features
-        self.training = False
-        self.testing = True
+        self.training = True
+        self.testing = False
 
         self.whiskers_on = True
         self.smell_on = False
@@ -44,7 +44,7 @@ class Ecosystem:
 
         # Training
         self.model_filepath_save = './models/testing/smell_lr_0001/model'
-        self.epoch_train = 50
+        self.epoch_train = 200
 
         # Testing
         self.epoch_test = 200
@@ -57,7 +57,10 @@ class Ecosystem:
         self._display_surf = pg.display.set_mode(self.size, pg.HWSURFACE | pg.DOUBLEBUF)
 
         # Add animals to the ecosystem
-        self.animals = np.array([agent.Agent(self._display_surf, model_filepath=self.model_filepath_load+'_%03d'%i, whiskers_on=self.whiskers_on, smell_on=self.smell_on) for i in range(self.nanimals)])
+        if self.training:
+            self.animals = np.array([agent.Agent(self._display_surf, whiskers_on=self.whiskers_on, smell_on=self.smell_on) for i in range(self.nanimals)])
+        else:    
+            self.animals = np.array([agent.Agent(self._display_surf, model_filepath=self.model_filepath_load+'_%03d'%i, whiskers_on=self.whiskers_on, smell_on=self.smell_on) for i in range(self.nanimals)])
 
         # Add plants to the environment
         self.environment = environment.Environment(self._display_surf, n_plants=self.nplants, smell_on=self.smell_on)
